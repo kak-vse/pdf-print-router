@@ -1,0 +1,21 @@
+# Сборка
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Отладочные снимки и рендеры
+ps_render*.png
+ui_screenshot*.png
+preview_landscape.png
+tests/gdi_*.png
+tests/*.ps
+
+# Локальные настройки
+*.log
