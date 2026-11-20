@@ -45,10 +45,14 @@ class PrintJob:
         return PrintJob(**d)
 
     def summary(self):
+        from .i18n import tr
         n = len(self.pages)
-        return (f"{self.name}: стр. {n} шт. → {self.printer or '(принтер не выбран)'}, "
-                f"{self.paper}, {self.orientation}, дуплекс={self.duplex}, "
-                f"копий={self.copies}")
+        return tr("{name}: стр. {n} шт. → {printer}, {paper}, {orient}, "
+                  "дуплекс={duplex}, копий={copies}").format(
+            name=self.name, n=n,
+            printer=self.printer or tr("(принтер не выбран)"),
+            paper=self.paper, orient=self.orientation,
+            duplex=self.duplex, copies=self.copies)
 
 
 def auto_split(document, printer_map=None):
@@ -67,10 +71,11 @@ def auto_split(document, printer_map=None):
         groups[name][2].append(i)
 
     jobs = []
+    from .i18n import tr
     for name in order:
         paper_name, paper_mm, pages = groups[name]
         jobs.append(PrintJob(
-            name=f"{paper_name} ({len(pages)} стр.)",
+            name=tr("{name} ({n} стр.)").format(name=paper_name, n=len(pages)),
             pages=pages,
             printer=printer_map.get(paper_name, ""),
             paper=paper_name,
@@ -119,7 +124,8 @@ def _scaled_transform(page, target_w, target_h, mode, margin_pt,
     box = page.mediabox
     w, h = float(box.width), float(box.height)
     if w <= 0 or h <= 0:
-        raise ValueError("Пустой mediabox страницы")
+        from .i18n import tr
+        raise ValueError(tr("Пустой mediabox страницы"))
     left, bottom = float(box.left), float(box.bottom)
 
     if rotate90:

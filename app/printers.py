@@ -209,8 +209,9 @@ def sumatra_settings_string(job, resolved_orientation):
 
 def print_job(sumatra_path, pdf_path, job, resolved_orientation, dry_run=False):
     """Отправляет задание на печать. Возвращает (ok, сообщение)."""
+    from .i18n import tr
     if not job.printer:
-        return False, "не выбран принтер"
+        return False, tr("не выбран принтер")
     cmd = [sumatra_path, "-print-to", job.printer,
            "-print-settings", sumatra_settings_string(job, resolved_orientation),
            "-silent", "-exit-on-print", pdf_path]
@@ -219,10 +220,11 @@ def print_job(sumatra_path, pdf_path, job, resolved_orientation, dry_run=False):
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     except subprocess.TimeoutExpired:
-        return False, "таймаут (принтер не отвечает?)"
+        return False, tr("таймаут (принтер не отвечает?)")
     if res.returncode == 0:
-        return True, "отправлено на печать"
-    return False, f"код {res.returncode}: {(res.stdout + res.stderr).strip()}"
+        return True, tr("отправлено на печать")
+    return False, tr("код {code}: {out}").format(
+        code=res.returncode, out=(res.stdout + res.stderr).strip())
 
 
 def job_to_manifest_entry(job, resolved_orientation, file_name):

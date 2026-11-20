@@ -7,6 +7,8 @@ import sys
 DEFAULTS = {
     "sumatra_path": "",
     "last_pdf_dir": "",
+    # Язык интерфейса: "ru" | "en"
+    "language": "ru",
     # Привязка формата бумаги к принтеру, напр. {"A4": "HP LaserJet", "A1": "Plotter"}
     "printer_map": {},
     # Пользовательские форматы бумаги, напр. {"Рулон 610": [610.0, 914.0]}

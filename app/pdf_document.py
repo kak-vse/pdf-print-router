@@ -19,7 +19,8 @@ class PdfDocument:
         self.path = path
         self.doc = fitz.open(path)
         if self.doc.needs_pass:
-            raise ValueError("PDF защищён паролем")
+            from .i18n import tr
+            raise ValueError(tr("PDF защищён паролем"))
         # Пользовательские форматы {имя: (w_mm, h_mm)} — назначает главное окно
         self.extra_papers = {}
 
@@ -40,22 +41,24 @@ class PdfDocument:
 
     def detect_paper(self, index):
         """Возвращает (метка, w_mm, h_mm). Метка — 'A4' или '100×150 мм' для нестандарта."""
+        from .i18n import tr
         w, h = self.page_size_mm(index)
         short, long_ = min(w, h), max(w, h)
         for name, (sw, sh) in self._known_papers().items():
             if abs(short - sw) <= TOLERANCE_MM and abs(long_ - sh) <= TOLERANCE_MM:
-                orient = "альбомная" if w > h else "книжная"
+                orient = tr("альбомная") if w > h else tr("книжная")
                 return f"{name} ({orient})", w, h
-        return f"{short:.0f}×{long_:.0f} мм", w, h
+        return f"{short:.0f}×{long_:.0f} {tr('мм')}", w, h
 
     def paper_group_key(self, index):
         """Ключ группировки для авторазбивки: размер без ориентации."""
+        from .i18n import tr
         w, h = self.page_size_mm(index)
         short, long_ = min(w, h), max(w, h)
         for name, (sw, sh) in self._known_papers().items():
             if abs(short - sw) <= TOLERANCE_MM and abs(long_ - sh) <= TOLERANCE_MM:
                 return name, sw, sh
-        return f"{short:.0f}×{long_:.0f} мм", short, long_
+        return f"{short:.0f}×{long_:.0f} {tr('мм')}", short, long_
 
     def thumbnail_png(self, index, max_px=180):
         """PNG-байты превью страницы (для QPixmap)."""

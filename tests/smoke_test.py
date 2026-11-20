@@ -184,4 +184,42 @@ win.delete_selected_job()
 assert len(win.jobs) == jobs_before
 print("[ok] удаление задания")
 
+# ---------- интернационализация ----------
+from app.i18n import tr, set_language, get_language
+
+set_language("en")
+assert tr("Книжная") == "Portrait"
+assert tr("Альбомная") == "Landscape"
+assert tr("Нечто несуществующее") == "Нечто несуществующее"  # fallback
+set_language("ru")
+assert tr("Книжная") == "Книжная"
+print("[ok] tr(): переводы и fallback")
+
+# переключение языка на лету в работающем окне
+idx_en = win.cb_language.findData("en")
+assert idx_en >= 0
+win.cb_language.setCurrentIndex(idx_en)
+assert get_language() == "en"
+assert win.editor_box.title() == "Print job"
+assert win.jobs_box.title() == "Jobs"
+assert win.cb_orient.itemText(1) == "Portrait"
+assert win.cb_duplex.itemText(0) == "None"
+assert win.jobs_table.horizontalHeaderItem(0).text() == "Name"
+assert win.lbl_scale.text().startswith("Scale:")
+assert "Page 1 of" in win.lbl_pagenav.text()
+# подписи миниатюр тоже перевелись
+assert "portrait" in win.page_list.item(0).text()
+print("[ok] окно переключено на английский на лету")
+
+# обратно на русский
+win.cb_language.setCurrentIndex(win.cb_language.findData("ru"))
+assert win.editor_box.title() == "Задание печати"
+assert win.cb_orient.itemText(1) == "Книжная"
+assert win.lbl_scale.text().startswith("Масштаб:")
+print("[ok] окно переключено обратно на русский")
+
+# язык сохранился в настройках
+assert win.settings.get("language") == "ru"
+print("[ok] язык сохраняется в настройках")
+
 print("ВСЕ ПРОВЕРКИ ПРОШЛИ")

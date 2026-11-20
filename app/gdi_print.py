@@ -16,6 +16,8 @@ from ctypes import wintypes
 
 import numpy as np
 
+from .i18n import tr
+
 _winspool = ctypes.WinDLL("winspool.drv")
 _gdi32 = ctypes.WinDLL("gdi32")
 
@@ -78,7 +80,7 @@ def _open_printer(name):
     h = ctypes.c_void_p()
     pd = _PRINTER_DEFAULTS(None, None, 0x08)  # PRINTER_ACCESS_USE
     if not _winspool.OpenPrinterW(name, ctypes.byref(h), ctypes.byref(pd)):
-        raise RuntimeError(f"Не удалось открыть принтер «{name}»")
+        raise RuntimeError(tr("Не удалось открыть принтер «{name}»").format(name=name))
     return h
 
 
@@ -86,11 +88,11 @@ def _get_devmode(h, name):
     """Текущий DEVMODE принтера (сырой буфер, как база для правок)."""
     size = _winspool.DocumentPropertiesW(0, h, name, None, None, 0)
     if size <= 0:
-        raise RuntimeError("DocumentProperties: не удалось получить размер DEVMODE")
+        raise RuntimeError(tr("DocumentProperties: не удалось получить размер DEVMODE"))
     buf = ctypes.create_string_buffer(size)
     rc = _winspool.DocumentPropertiesW(0, h, name, buf, None, 2)  # DM_OUT_BUFFER
     if rc < 0:
-        raise RuntimeError("DocumentProperties: не удалось получить DEVMODE")
+        raise RuntimeError(tr("DocumentProperties: не удалось получить DEVMODE"))
     return buf
 
 
@@ -202,20 +204,20 @@ def print_pdf_gdi(printer_name, pdf_path, job, paper_mm, dpi_max=300,
 
         hdc = _gdi32.CreateDCW("WINSPOOL", printer_name, None, buf)
         if not hdc:
-            return False, "CreateDCW: драйвер отклонил настройки бумаги"
+            return False, tr("CreateDCW: драйвер отклонил настройки бумаги")
         try:
             dpi_x = _gdi32.GetDeviceCaps(hdc, _LOGPIXELSX)
             dpi_y = _gdi32.GetDeviceCaps(hdc, _LOGPIXELSY)
             page_w = _gdi32.GetDeviceCaps(hdc, _HORZRES)
             page_h = _gdi32.GetDeviceCaps(hdc, _VERTRES)
             if dpi_x <= 0 or page_w <= 0 or page_h <= 0:
-                return False, "драйвер вернул некорректные параметры страницы"
+                return False, tr("драйвер вернул некорректные параметры страницы")
 
             doc = pymupdf.open(pdf_path)
             try:
                 di = _DOCINFO(ctypes.sizeof(_DOCINFO), doc_name, None, None, 0)
                 if _gdi32.StartDocW(hdc, ctypes.byref(di)) <= 0:
-                    return False, "StartDoc: задание не создано"
+                    return False, tr("StartDoc: задание не создано")
                 try:
                     for page in doc:
                         zoom = min(dpi_max, dpi_x, dpi_y) / 72.0
@@ -231,16 +233,16 @@ def print_pdf_gdi(printer_name, pdf_path, job, paper_mm, dpi_max=300,
                         bmi.bmiHeader.biCompression = 0  # BI_RGB
 
                         if _gdi32.StartPage(hdc) <= 0:
-                            return False, "StartPage: ошибка драйвера"
+                            return False, tr("StartPage: ошибка драйвера")
                         res = _gdi32.StretchDIBits(
                             hdc, 0, 0, page_w, page_h,
                             0, 0, pix.width, pix.height,
                             data, ctypes.byref(bmi),
                             _DIB_RGB_COLORS, _SRCCOPY)
                         if res in (0, -1):
-                            return False, "StretchDIBits: ошибка вывода"
+                            return False, tr("StretchDIBits: ошибка вывода")
                         if _gdi32.EndPage(hdc) <= 0:
-                            return False, "EndPage: ошибка драйвера"
+                            return False, tr("EndPage: ошибка драйвера")
                 finally:
                     _gdi32.EndDoc(hdc)
             finally:
@@ -249,4 +251,4 @@ def print_pdf_gdi(printer_name, pdf_path, job, paper_mm, dpi_max=300,
             _gdi32.DeleteDC(hdc)
     finally:
         _winspool.ClosePrinter(h_printer)
-    return True, "отправлено на печать (GDI)"
+    return True, tr("отправлено на печать (GDI)")
